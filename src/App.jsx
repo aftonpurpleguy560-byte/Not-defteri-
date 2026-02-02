@@ -2,46 +2,82 @@ import { useState, useEffect } from 'react';
 
 function App() {
   const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem('notes');
+    const saved = localStorage.getItem('efe-not-v2');
     return saved ? JSON.parse(saved) : [];
   });
-  const [input, setInput] = useState('');
+  const [text, setText] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('notes', JSON.stringify(notes));
+    localStorage.setItem('efe-not-v2', JSON.stringify(notes));
   }, [notes]);
 
   const addNote = () => {
-    if (!input) return;
-    setNotes([...notes, { id: Date.now(), text: input }]);
-    setInput('');
+    if (text.trim()) {
+      setNotes([{ id: Date.now(), content: text, completed: false }, ...notes]);
+      setText('');
+    }
   };
 
-  const deleteNote = (id) => {
-    setNotes(notes.filter(note => note.id !== id));
+  const toggleComplete = (id) => {
+    setNotes(notes.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
   };
+
+  const filteredNotes = notes.filter(n => 
+    n.content.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white p-8 font-sans">
-      <div className="max-w-md mx-auto bg-gray-900 p-6 rounded-xl shadow-2xl border border-purple-500">
-        <h1 className="text-2xl font-bold mb-4 text-purple-400">Not Defterim</h1>
-        <div className="flex gap-2 mb-6">
+    <div className="min-h-screen bg-black text-gray-100 p-6">
+      <div className="max-w-xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-purple-600 mb-8 text-center tracking-tighter">NOTLARIM</h1>
+        
+        {/* Arama ve Ekleme Alanı */}
+        <div className="space-y-4 mb-10">
           <input 
-            className="flex-1 p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-purple-500"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Notunuzu yazın..."
+            type="text"
+            placeholder="Notlarda ara..."
+            className="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button onClick={addNote} className="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700">Ekle</button>
+          <div className="flex gap-2">
+            <input 
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addNote()}
+              placeholder="Yeni bir şeyler yaz..."
+              className="flex-1 bg-gray-900 border border-purple-900/30 p-4 rounded-xl focus:border-purple-500 outline-none"
+            />
+            <button onClick={addNote} className="bg-purple-600 hover:bg-purple-500 px-6 rounded-xl font-bold transition-transform active:scale-95">
+              EKLE
+            </button>
+          </div>
         </div>
-        <ul className="space-y-3">
-          {notes.map(note => (
-            <li key={note.id} className="flex justify-between bg-gray-800 p-3 rounded border-l-4 border-purple-500">
-              {note.text}
-              <button onClick={() => deleteNote(note.id)} className="text-red-400 hover:text-red-600">Sil</button>
-            </li>
+
+        {/* Not Listesi */}
+        <div className="grid gap-3">
+          {filteredNotes.map(note => (
+            <div 
+              key={note.id} 
+              className={`group flex items-center justify-between p-4 rounded-xl border transition-all ${
+                note.completed ? 'bg-gray-900/30 border-gray-800 opacity-50' : 'bg-gray-900 border-purple-900/20'
+              }`}
+            >
+              <span 
+                onClick={() => toggleComplete(note.id)}
+                className={`flex-1 cursor-pointer ${note.completed ? 'line-through text-gray-600' : 'text-gray-200'}`}
+              >
+                {note.content}
+              </span>
+              <button 
+                onClick={() => setNotes(notes.filter(n => n.id !== note.id))}
+                className="text-gray-600 hover:text-red-500 ml-4 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Sil
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
